@@ -6,12 +6,9 @@ import warnings
 warnings.filterwarnings("ignore", message="Unverified HTTPS request")
 
 import urllib3
-from langchain_community.document_loaders.base_o365 import CHUNK_SIZE
-
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-import streamlit as st  
 import validators
+import streamlit as st  
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.chat_history import BaseChatMessageHistory
@@ -45,13 +42,13 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
 
 
 ## Get the Groq API key
-
+groq_api_key =""
 with st.sidebar:
     groq_api_key_input = st.text_input("Enter your Groq API Key:", type="password")
     if groq_api_key_input:
         groq_api_key = groq_api_key_input
     else:
-        groq_api_key = os.getenv("GROQ_API_KEY_1")
+        st.error("Missing  Groq API Key ")
 
 #groq_api_key = os.getenv("GROQ_API_KEY_1")
 
@@ -64,27 +61,32 @@ genric_url = st.text_input("URL: Enter the URL of the Youtube video or website:"
 
 
 ### llm
-llm = ChatGroq(model="llama-3.1-8b-instant", api_key=groq_api_key)
+if groq_api_key_input:
+    llm = ChatGroq(model="llama-3.1-8b-instant", api_key=groq_api_key)
 
-# Chunk size to stay under Groq token limit (~6000 TPM). ~1 token ≈ 4 chars, so ~4000 chars is safe per call.
-CHUNK_CHARS = 4000
-CHUNK_OVERLAP = 200
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_CHARS, chunk_overlap=CHUNK_OVERLAP)
 
-# Prompt for summarizing a single chunk (no history, kept small)
-chunk_prompt = ChatPromptTemplate.from_messages([
-    ("system", "Summarize this text in a few sentences. Capture the main points only."),
-    ("human", "{content}"),
-])
-chunk_chain = chunk_prompt | llm | StrOutputParser()
+    # Chunk size to stay under Groq token limit (~6000 TPM). ~1 token ≈ 4 chars, so ~4000 chars is safe per call.
+    CHUNK_CHARS = 4000
+    CHUNK_OVERLAP = 200
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_CHARS, chunk_overlap=CHUNK_OVERLAP)
 
-# Final combine step: merge chunk summaries into one; includes session history
-summarize_prompt = ChatPromptTemplate.from_messages([
-    ("system", "You combine the following partial summaries into one coherent summary of about 300 words. Be concise and capture the main points. If there is prior conversation, you can refer to it for context."),
-    MessagesPlaceholder(variable_name="chat_history"),
-    ("human", "Partial summaries to combine:\n\n{content}"),
-])
-summarize_chain = summarize_prompt | llm | StrOutputParser()
+    # Prompt for summarizing a single chunk (no history, kept small)
+    chunk_prompt = ChatPromptTemplate.from_messages([
+        ("system", "Summarize this text in a few sentences. Capture the main points only."),
+        ("human", "{content}"),
+    ])
+    chunk_chain = chunk_prompt | llm | StrOutputParser()
+
+    # Final combine step: merge chunk summaries into one; includes session history
+    summarize_prompt = ChatPromptTemplate.from_messages([
+        ("system", "You combine the following partial summaries into one coherent summary of about 300 words. Be concise and capture the main points. If there is prior conversation, you can refer to it for context."),
+        MessagesPlaceholder(variable_name="chat_history"),
+        ("human", "Partial summaries to combine:\n\n{content}"),
+    ])
+    summarize_chain = summarize_prompt | llm | StrOutputParser()
+
+else:
+    st.error("Missing  Groq API Key ")
 
 
 if st.button("Summarize the content"):
