@@ -21,13 +21,6 @@ from langchain_community.document_loaders import YoutubeLoader, UnstructuredURLL
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-
-load_dotenv()
-os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY_1")
-os.environ["OPENAI_API_KEY"] = os.getenv("OPEN_API_KEY-ANU")
-groq_api_key = os.getenv("GROQ_API_KEY_1")
-
-
 ## Streamlit app
 st.set_page_config(page_title="Text Summarization from Youtube or website", page_icon=":book:", layout="wide")
 st.title("Text Summarization from Youtube or website")
