@@ -6,7 +6,6 @@ import warnings
 warnings.filterwarnings("ignore", message="Unverified HTTPS request")
 
 import urllib3
-from dotenv import load_dotenv
 from langchain_community.document_loaders.base_o365 import CHUNK_SIZE
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
